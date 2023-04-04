@@ -1,12 +1,9 @@
 package com.example.songrecommenderapp
 
-
-
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.apache.commons.csv.CSVRecord
-import java.io.File
-import java.io.FileReader
+
 
 data class Song (
     val id: Int,
@@ -18,32 +15,33 @@ data class Song (
     val popularity: Int
     )
 
-val reader = FileReader("/assets/songs_w_links.csv")
-val csvFormat = CSVFormat.Builder.create()
-    .setHeader("ID", "artists", "name", "year", "cluster", "link", "popularity")
-    .setDelimiter(',')
-    .build()
+class Recommendations(private val context: MainActivity, filename: String) {
+    private val csvFile = "songs_w_links.csv"
+    private val csvFormat: CSVFormat = CSVFormat.Builder.create()
+        .setHeader("ID", "artists", "name", "year", "cluster", "link", "popularity")
+        .build()
 
-private fun recordToSong(record: CSVRecord): Song {
-    return Song(
-        record.get("#").toInt(),
-        record.get("artists"),
-        record.get("name"),
-        record.get("year").toInt(),
-        record.get("cluster").toInt(),
-        record.get("link"),
-        record.get("popularity").toInt()
-    )
-}
-class Recommendations(val filename: String) {
-    private val songs: List<Song> = File(filename).bufferedReader().use { reader ->
+    private fun recordToSong(record: CSVRecord): Song {
+        return Song(
+            record.get("ID").toInt(),
+            record.get("artists"),
+            record.get("name"),
+            record.get("year").toInt(),
+            record.get("cluster").toInt(),
+            record.get("link"),
+            record.get("popularity").toInt()
+        )
+    }
+
+    private val songs: List<Song> = context.assets.open(csvFile).bufferedReader().use { reader ->
         val parser = CSVParser(reader, csvFormat)
-        parser.records.map { recordToSong(it) }
+        parser.records.drop(1).map { recordToSong(it) }
     }
 
     fun findRecommendations(songTitle: String, artist: String): Pair<Int, List<Song>>? {
         val faves = songs.filter {
-            it.name.lowercase().contains(songTitle.lowercase()) && it.artist.lowercase().contains(artist.lowercase())
+            it.name.lowercase().contains(songTitle.lowercase()) &&
+                    (artist.isBlank() || it.artist.lowercase().contains(artist.lowercase()))
         }
         if (faves.isEmpty()) {
             return null

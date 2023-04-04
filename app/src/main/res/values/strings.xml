@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">SongRecommender App</string>
+    <string name="favorite_cluster_label">Favorite Cluster: %1$d</string>
+
 </resources>
